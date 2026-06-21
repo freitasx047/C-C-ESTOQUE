@@ -12,7 +12,6 @@ const app = express();
 // ========== DADOS DOS ITENS ==========
 const DATA_FILE = path.join('/tmp', 'items.json');
 
-// Itens padrão
 const DEFAULT_ITEMS = [
   { id: 1, name: 'Bot de Comandos', category: 'comandos', price: 'R$ 50,00', stock: 5, logo: '⚙️' },
   { id: 2, name: 'Bot de Utilidades', category: 'utilidades', price: 'R$ 35,00', stock: 3, logo: '🔧' },
@@ -55,7 +54,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.REDIRECT_URI ? process.env.REDIRECT_URI.split('/auth')[0] : '*',
+  origin: '*',
   credentials: true
 }));
 
@@ -68,7 +67,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax'
@@ -78,12 +77,13 @@ app.use(session({
 // ========== ARQUIVOS ESTÁTICOS ==========
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ========== ROTAS DE AUTENTICAÇÃO ==========
+// ========== ROTAS ==========
 
 app.get('/auth/discord', (req, res) => {
+  const redirectUri = process.env.REDIRECT_URI || `https://${req.get('host')}/auth/discord/callback`;
   const params = new URLSearchParams({
     client_id: process.env.CLIENT_ID,
-    redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/auth/discord/callback`,
+    redirect_uri: redirectUri,
     response_type: 'code',
     scope: 'identify'
   });
@@ -98,6 +98,8 @@ app.get('/auth/discord/callback', async (req, res) => {
   }
 
   try {
+    const redirectUri = process.env.REDIRECT_URI || `https://${req.get('host')}/auth/discord/callback`;
+    
     const tokenResponse = await axios.post(
       'https://discord.com/api/oauth2/token',
       new URLSearchParams({
@@ -105,7 +107,7 @@ app.get('/auth/discord/callback', async (req, res) => {
         client_secret: process.env.CLIENT_SECRET,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/auth/discord/callback`
+        redirect_uri: redirectUri
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
@@ -141,8 +143,6 @@ app.get('/auth/logout', (req, res) => {
     res.redirect('/');
   });
 });
-
-// ========== APIS ==========
 
 app.get('/api/user', (req, res) => {
   if (!req.session.user) {
@@ -200,10 +200,8 @@ app.post('/api/items', (req, res) => {
   res.status(400).json({ error: 'Ação inválida' });
 });
 
-// ========== ROTA PRINCIPAL ==========
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-// ========== EXPORT PARA VERCEL ==========
 module.exports = app;
