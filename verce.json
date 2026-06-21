@@ -19,12 +19,5 @@
       "src": "/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "env": {
-    "CLIENT_ID": "1518048115007951010",
-    "CLIENT_SECRET": "pq6lyOl4XowIl4RK7l0CB208QhUD4Rvw",
-    "REDIRECT_URI": "https://seu-site.vercel.app/auth/discord/callback",
-    "OWNER_IDS": "1336114750383460392,1512923543564976259,1487822752579846325",
-    "SESSION_SECRET": "o_vicente_e_perneta_p_krl_1_2_2_3_3_44"
-  }
+  ]
 }
